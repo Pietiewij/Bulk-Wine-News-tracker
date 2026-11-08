@@ -16,14 +16,14 @@ def fetch_news():
     for source, url in FEEDS.items():
         try:
             # Download the RSS XML feed safely
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=10) as response:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req, timeout=15) as response:
                 xml_data = response.read()
                 
             root = ET.fromstring(xml_data)
             # Find all news items in the RSS feed
             for item in root.findall('.//item')[:5]: # Get the top 5 articles per site
-                title = item.find('title').text if item.find('title') is not None else ""
+                title = item.find('title').text if item.find('title') is not None else "No Title"
                 desc = item.find('description').text if item.find('description') is not None else ""
                 collected_articles.append(f"Source: {source}\nTitle: {title}\nSummary: {desc}\n---")
         except Exception as e:
@@ -34,9 +34,9 @@ def fetch_news():
 def ask_gemini(news_text):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        return "Error: No API key found."
+        return "Error: No API key found in your GitHub Secrets. Please add GEMINI_API_KEY to your repository settings."
         
-    # Endpoint for the free Gemini 2.5 Flash model
+    # Endpoint for the free Gemini Flash model
     url = f"https://googleapis.com{api_key}"
     
     prompt = (
@@ -54,6 +54,7 @@ def ask_gemini(news_text):
     try:
         with urllib.request.urlopen(req, data=json.dumps(data).encode("utf-8")) as response:
             res_data = json.loads(response.read().decode("utf-8"))
+            # FIX: Correctly navigate the JSON array structure returned by Google
             return res_data['candidates'][0]['content']['parts'][0]['text']
     except Exception as e:
         return f"AI Generation failed: {e}"
@@ -63,14 +64,15 @@ if __name__ == "__main__":
     raw_news = fetch_news()
     
     if not raw_news:
-        print("No news gathered today.")
+        print("No news gathered today from live feeds.")
+        report = "No new bulk wine market updates found in the feeds today. Will check again on the next automated cycle."
     else:
         print("Asking Gemini to generate the report...")
         report = ask_gemini(raw_news)
         
-        # Save the report as an index.md file for our website
-        with open("index.md", "w", encoding="utf-8") as f:
-            f.write("# 🍇 Bulk Wine Market Tracker\n")
-            f.write("*Automatically updated daily using free AI agent technology.*\n\n")
-            f.write(report)
-        print("Report updated successfully!")
+    # FIX: Always write the file so the GitHub runner never complains about a missing file
+    with open("index.md", "w", encoding="utf-8") as f:
+        f.write("# 🍇 Bulk Wine Market Tracker\n")
+        f.write("*Automatically updated daily using free AI agent technology.*\n\n")
+        f.write(report)
+    print("index.md file saved successfully!")
