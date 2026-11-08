@@ -1,0 +1,31 @@
+name: Run Wine Tracker Daily
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # This means run every single day at 8:00 AM UTC
+  workflow_dispatch: # This allows you to click a button and run it manually anytime
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repo code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-node-version: '3.10'
+
+    - name: Run script and call Gemini
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: python tracker.py
+
+    - name: Commit and push the new report web page
+      run: |
+        git config --global user.name "Wine Tracker Bot"
+        git config --global user.email "bot@github.com"
+        git add index.md
+        git commit -m "Daily Market Report Auto-Update" || exit 0
+        git push
