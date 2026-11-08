@@ -2,24 +2,22 @@ name: Run Wine Tracker Daily
 
 on:
   schedule:
-    - cron: '0 8 * * *' # This means run every single day at 8:00 AM UTC
-  workflow_dispatch: # This allows you to click a button and run it manually anytime
+    - cron: '0 8 * * *'
+  workflow_dispatch:
 
-jobs:
-  build-and-run:
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: write
     steps:
     - name: Check out repo code
-
       uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-node-version: '3.10'
+        python-version: '3.10'
 
     - name: Run script and call Gemini
       env:
