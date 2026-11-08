@@ -7,9 +7,13 @@ on:
 
 jobs:
   build-and-run:
+jobs:
+  build-and-run:
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
     - name: Check out repo code
+
       uses: actions/checkout@v4
 
     - name: Set up Python
